@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+<title>University of Cambridge — Est. MCCIX</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#c9a84c; --gold-pale:#e8d49a; --cambridge:#8ab4c5;
+  --red:#c0392b; --mono:'Space Mono',monospace;
+  --serif:'Cormorant Garamond',serif; --display:'Bebas Neue',sans-serif;
+  --transition:0.5s ease;
+}
+[data-theme="dark"] {
+  --bg:#080b12; --bg2:#05080f; --bg3:#030509; --text:#f0ead8;
+  --text-muted:rgba(240,234,216,0.5); --text-dim:rgba(240,234,216,0.25);
+  --border:rgba(201,168,76,0.18); --border-hover:rgba(201,168,76,0.55);
+  --card-hover:rgba(201,168,76,0.05); --nav-bg:rgba(8,11,18,0.88);
+  --scan:rgba(0,0,0,0.18); --grid:rgba(201,168,76,0.05);
+  --marquee-bg:var(--gold); --marquee-text:#080b12;
+  --overlay:rgba(8,11,18,0.72);
+}
+[data-theme="light"] {
+  --bg:#f5f0e6; --bg2:#ede8dc; --bg3:#e5dfd2; --text:#080b12;
+  --text-muted:rgba(8,11,18,0.55); --text-dim:rgba(8,11,18,0.3);
+  --border:rgba(8,11,18,0.14); --border-hover:rgba(201,168,76,0.7);
+  --card-hover:rgba(201,168,76,0.09); --nav-bg:rgba(245,240,230,0.92);
+  --scan:rgba(8,11,18,0.04); --grid:rgba(8,11,18,0.05);
+  --marquee-bg:#080b12; --marquee-text:var(--gold);
+  --overlay:rgba(8,11,18,0.52);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--serif);overflow-x:hidden;cursor:none;transition:background var(--transition),color var(--transition)}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,var(--scan) 3px,var(--scan) 4px);pointer-events:none;z-index:9994}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9993;opacity:.4}
+
+/* CURSOR */
+.cursor-dot{position:fixed;width:6px;height:6px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:10000;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s,height .2s}
+.cursor-ring{position:fixed;width:28px;height:28px;border:1px solid rgba(201,168,76,.5);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .25s,height .25s,border-color .25s}
+body.hovering .cursor-dot{width:10px;height:10px}
+body.hovering .cursor-ring{width:52px;height:52px;border-color:var(--gold)}
+
+/* IMAGE FOLLOWER */
+.img-follower{position:fixed;width:340px;height:230px;pointer-events:none;z-index:9990;opacity:0;transform:translate(28px,-50%) scale(.86) rotate(-2deg);transition:opacity .35s ease,transform .35s ease;overflow:hidden;border:1px solid var(--border-hover);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.img-follower.active{opacity:1;transform:translate(28px,-50%) scale(1) rotate(0)}
+.img-follower img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.85) contrast(1.05)}
+.img-follower-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,var(--overlay));padding:24px 14px 12px;font-family:var(--mono);font-size:9px;letter-spacing:3px;color:#f0ead8;text-transform:uppercase}
+
+/* SCROLL TO TOP */
+#scrollTop{position:fixed;bottom:36px;right:36px;width:44px;height:44px;border:1px solid var(--border);background:var(--bg2);color:var(--gold);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:none;z-index:990;opacity:0;transform:translateY(16px);transition:opacity .4s,transform .4s,border-color .3s,background .3s;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)}
+#scrollTop.show{opacity:1;transform:none}
+#scrollTop:hover{border-color:var(--gold);background:rgba(201,168,76,.12)}
+
+/* PRELOADER */
+#loader{position:fixed;inset:0;background:#080b12;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s ease}
+#loader.out{opacity:0;pointer-events:none}
+.ldr-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:36px}
+.ldr-cell{width:10px;height:10px;background:var(--gold);opacity:0;animation:cellBlink 1.8s infinite}
+.ldr-cell:nth-child(even){background:#8ab4c5;animation-delay:calc(var(--i)*.06s + .25s)}
+.ldr-cell:nth-child(odd){animation-delay:calc(var(--i)*.08s)}
+@keyframes cellBlink{0%,100%{opacity:0}50%{opacity:1}}
+.ldr-letters{display:flex;gap:1px;margin-bottom:44px}
+.ldr-letter{font-family:var(--display);font-size:clamp(30px,5vw,64px);color:var(--gold);opacity:0;animation:lReveal .5s forwards;letter-spacing:10px}
+@keyframes lReveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ldr-status{font-family:var(--mono);font-size:11px;color:#8ab4c5;letter-spacing:3px;text-transform:uppercase;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ldr-bar-w{width:220px;height:2px;background:rgba(201,168,76,.15);margin-top:16px;overflow:hidden}
+.ldr-bar{height:100%;background:var(--gold);animation:barFill 2.4s ease forwards}
+@keyframes barFill{from{width:0}to{width:100%}}
+.enter-btn{margin-top:36px;font-family:var(--mono);font-size:11px;letter-spacing:4px;color:#080b12;background:var(--gold);border:none;padding:12px 32px;cursor:none;opacity:0;transition:all .3s;text-transform:uppercase;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)}
+.enter-btn:hover{background:#f0ead8}
+.enter-btn.show{opacity:1}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:18px 44px;border-bottom:1px solid var(--border);backdrop-filter:blur(14px);background:var(--nav-bg);transition:background var(--transition),border-color var(--transition)}
+.nav-logo{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--text-muted);text-decoration:none;text-transform:uppercase;transition:color .3s}
+.nav-links a:hover{color:var(--gold)}
+.nav-r{display:flex;align-items:center;gap:18px}
+.nav-coord{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:2px}
+.theme-btn{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-muted);background:none;border:1px solid var(--border);padding:5px 10px;cursor:none;text-transform:uppercase;transition:all .3s;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)}
+.theme-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;padding:80px 60px;position:relative;overflow:hidden}
+
+.hero-grid{position:absolute;inset:0;z-index:1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:60px 60px}
+.hero-coords{position:absolute;top:110px;right:60px;font-family:var(--mono);font-size:10px;color:rgba(240,234,216,.55);letter-spacing:2px;line-height:1.9;text-align:right;z-index:2}
+.hero-ver{position:absolute;top:110px;left:60px;font-family:var(--mono);font-size:10px;color:rgba(201,168,76,.45);letter-spacing:3px;line-height:2;z-index:2}
+
+/* NEW: The Split Grid Layout */
+.hero-split{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;width:100%;position:relative;z-index:2;align-items:center}
+
+/* NEW: The 3D Model Container */
+.hero-model{height:75vh;width:100%;position:relative;-webkit-mask-image:radial-gradient(circle at center, black 40%, transparent 80%);mask-image:radial-gradient(circle at center, black 40%, transparent 80%)}
+
+.hero-content{position:relative;z-index:2}
+.hero-eye{font-family:var(--mono);font-size:10px;letter-spacing:5px;color:var(--cambridge);text-transform:uppercase;margin-bottom:16px}
+.hero-eye::before{content:'>_ ';color:var(--gold)}
+.hero-title{font-family:var(--display);font-size:clamp(64px,12vw,180px);line-height:.88;letter-spacing:-1px;margin-bottom:16px}
+.hero-title .l1{color:#f0ead8;display:block}
+.hero-title .l2{color:var(--gold);display:block}
+.hero-title .l3{color:transparent;-webkit-text-stroke:1px rgba(240,234,216,.2);display:block}
+.glitch{position:relative;display:inline-block}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%}
+.glitch::before{color:var(--cambridge);animation:g1 5s infinite;clip-path:polygon(0 25%,100% 25%,100% 45%,0 45%)}
+.glitch::after{color:var(--red);animation:g2 5s infinite;clip-path:polygon(0 60%,100% 60%,100% 78%,0 78%)}
+@keyframes g1{0%,88%,100%{transform:translateX(0);opacity:0}89%{transform:translateX(-4px);opacity:.7}91%{transform:translateX(3px);opacity:.5}93%{transform:translateX(0);opacity:0}}
+@keyframes g2{0%,85%,100%{transform:translateX(0);opacity:0}86%{transform:translateX(5px);opacity:.6}89%{transform:translateX(-2px);opacity:.4}91%{transform:translateX(0);opacity:0}}
+.hero-sub{font-family:var(--serif);font-style:italic;font-weight:300;font-size:clamp(16px,2vw,22px);color:rgba(240,234,216,.6);max-width:460px;line-height:1.8;margin-bottom:44px}
+.hero-stats{display:flex;gap:56px;flex-wrap:wrap}
+.hero-stat-num{font-family:var(--display);font-size:clamp(36px,5vw,68px);color:var(--gold);line-height:1;display:block}
+.hero-stat-lbl{font-family:var(--mono);font-size:9px;letter-spacing:3px;color:rgba(240,234,216,.4);text-transform:uppercase;margin-top:4px;display:block}
+.hero-scroll{position:absolute;bottom:44px;right:60px;font-family:var(--mono);font-size:9px;letter-spacing:3px;color:rgba(201,168,76,.5);writing-mode:vertical-rl;text-transform:uppercase;z-index:2;animation:scrollBob 2s ease-in-out infinite}
+@keyframes scrollBob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* MARQUEE */
+.marquee-strip{background:var(--marquee-bg);padding:10px 0;overflow:hidden;white-space:nowrap;transition:background var(--transition)}
+.marquee-inner{display:inline-block;animation:marquee 28s linear infinite}
+.marquee-inner span{font-family:var(--mono);font-size:10px;letter-spacing:4px;color:var(--marquee-text);text-transform:uppercase;margin-right:56px}
+.marquee-inner span::before{content:'✦ '}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* IMAGE STRIP */
+.img-strip{display:flex;height:260px;overflow:hidden}
+.strip-item{flex:1;position:relative;overflow:hidden;cursor:none;transition:flex .6s ease}
+.strip-item:hover{flex:2.5}
+.strip-item img{width:100%;height:100%;object-fit:cover;filter:saturate(.65) brightness(.8);transition:filter .5s,transform .8s}
+.strip-item:hover img{filter:saturate(1) brightness(1);transform:scale(1.06)}
+.strip-lbl{position:absolute;bottom:0;left:0;right:0;padding:20px 14px 12px;background:linear-gradient(transparent,rgba(8,11,18,.82));font-family:var(--mono);font-size:9px;letter-spacing:2px;color:rgba(240,234,216,.85);text-transform:uppercase;opacity:0;transition:opacity .4s}
+.strip-item:hover .strip-lbl{opacity:1}
+.strip-fallback{width:100%;height:100%;display:block}
+
+/* SECTIONS */
+section{padding:120px 60px;position:relative;transition:background var(--transition)}
+.sec-label{font-family:var(--mono);font-size:9px;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:64px;display:flex;align-items:center;gap:12px}
+.sec-label::after{content:'';flex:1;max-width:80px;height:1px;background:var(--gold);opacity:.35}
+
+/* ABOUT */
+#about{background:var(--bg)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.about-head{font-family:var(--serif);font-size:clamp(30px,3.5vw,52px);font-weight:300;line-height:1.2;color:var(--text);margin-bottom:28px}
+.about-head em{font-style:italic;color:var(--gold)}
+.about-body{font-family:var(--serif);font-size:17px;font-weight:300;line-height:1.95;color:var(--text-muted);margin-bottom:20px}
+.about-motto{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--gold-pale);border-left:2px solid var(--gold);padding-left:20px;margin-top:36px;line-height:1.6}
+.about-motto small{font-size:13px;color:var(--text-dim);display:block;margin-top:6px;font-style:normal}
+.about-img-wrap{position:relative;height:580px;clip-path:polygon(0 0,100% 0,100% calc(100% - 28px),calc(100% - 28px) 100%,0 100%);overflow:hidden}
+.about-img-wrap img{width:100%;height:100%;object-fit:cover;filter:saturate(.8) contrast(1.05);transition:transform 6s ease,filter .4s}
+.about-img-wrap:hover img{transform:scale(1.06);filter:saturate(1) contrast(1.05)}
+.about-img-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(8,11,18,.3) 0%,transparent 55%)}
+.about-img-tag{position:absolute;bottom:16px;left:16px;font-family:var(--mono);font-size:9px;letter-spacing:3px;color:rgba(240,234,216,.75);text-transform:uppercase;background:rgba(8,11,18,.5);padding:6px 10px;backdrop-filter:blur(4px)}
+
+/* EXPLORE (CURSOR FOLLOWER) */
+#explore{background:var(--bg2)}
+.explore-hdr{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:end;margin-bottom:80px}
+.explore-title{font-family:var(--display);font-size:clamp(48px,8vw,120px);color:var(--text);line-height:.9}
+.explore-title span{color:var(--gold)}
+.explore-desc{font-family:var(--serif);font-size:17px;font-weight:300;line-height:1.9;color:var(--text-muted)}
+.explore-list{list-style:none}
+.exp-item{display:flex;align-items:center;justify-content:space-between;padding:28px 0;border-bottom:1px solid var(--border);cursor:none;position:relative;overflow:hidden;transition:border-color .3s}
+.exp-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--card-hover);transition:width .5s ease}
+.exp-item:hover::before{width:100%}
+.exp-item:hover{border-color:var(--border-hover)}
+.exp-item:hover .ei-name{color:var(--gold);transform:translateX(12px)}
+.exp-item:hover .ei-num{opacity:1}
+.exp-item:hover .ei-arrow{transform:translateX(6px);opacity:1}
+.ei-left{display:flex;align-items:center;gap:20px;position:relative;z-index:1}
+.ei-num{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--gold);opacity:.35;transition:opacity .3s;min-width:28px}
+.ei-name{font-family:var(--serif);font-size:clamp(22px,3vw,42px);font-weight:300;color:var(--text);transition:color .4s,transform .4s}
+.ei-right{display:flex;align-items:center;gap:16px;position:relative;z-index:1}
+.ei-tag{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--cambridge);text-transform:uppercase}
+.ei-arrow{font-size:18px;color:var(--gold);opacity:0;transition:transform .3s,opacity .3s}
+
+/* HISTORY */
+#history{background:var(--bg2)}
+.hist-intro{max-width:680px;margin-bottom:80px}
+.hist-intro h2{font-family:var(--display);font-size:clamp(48px,8vw,120px);color:var(--text);line-height:.9;margin-bottom:24px}
+.hist-intro h2 span{color:var(--gold)}
+.hist-intro p{font-family:var(--serif);font-size:17px;font-weight:300;line-height:1.95;color:var(--text-muted)}
+.timeline{border-left:1px solid rgba(201,168,76,.25);margin-left:20px}
+.tl-item{display:grid;grid-template-columns:100px 1fr auto;gap:32px;padding:32px 0 32px 48px;border-bottom:1px solid var(--border);position:relative;transition:background .3s;align-items:start}
+.tl-item:hover{background:var(--card-hover)}
+.tl-item::before{content:'';position:absolute;left:-5px;top:40px;width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 14px var(--gold)}
+.tl-year{font-family:var(--display);font-size:32px;color:var(--gold);line-height:1;padding-top:4px}
+.tl-content h3{font-family:var(--serif);font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px}
+.tl-content p{font-family:var(--serif);font-size:14px;font-weight:300;line-height:1.85;color:var(--text-muted)}
+.tl-thumb{width:100px;height:72px;overflow:hidden;flex-shrink:0;clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);background:var(--bg3)}
+.tl-thumb img{width:100%;height:100%;object-fit:cover;filter:saturate(.7);transition:filter .4s}
+.tl-item:hover .tl-thumb img{filter:saturate(1)}
+
+/* COLLEGES */
+#colleges{background:var(--bg)}
+.col-hdr{display:grid;grid-template-columns:1fr 1fr;align-items:end;margin-bottom:56px;gap:40px}
+.col-hdr h2{font-family:var(--display);font-size:clamp(48px,7vw,100px);color:var(--text);line-height:.9}
+.col-hdr h2 span{color:var(--gold)}
+.col-hdr p{font-family:var(--serif);font-size:16px;font-weight:300;line-height:1.85;color:var(--text-muted)}
+.col-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.col-card{border:1px solid var(--border);padding:18px 14px;position:relative;overflow:hidden;transition:all .4s;cursor:none}
+.col-card::before{content:'';position:absolute;bottom:0;left:0;width:100%;height:0;background:var(--card-hover);transition:height .4s}
+.col-card:hover::before{height:100%}
+.col-card:hover{border-color:var(--border-hover)}
+.col-card:hover .cc-name{color:var(--gold)}
+.cc-n{font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px}
+.cc-name{font-family:var(--serif);font-size:14px;font-weight:600;color:var(--text-muted);line-height:1.3;transition:color .3s}
+
+/* ALUMNI */
+#alumni{background:var(--bg2)}
+.al-title{font-family:var(--display);font-size:clamp(48px,8vw,120px);line-height:.9;color:var(--text);margin-bottom:16px}
+.al-title span{color:var(--gold)}
+.al-sub{font-family:var(--serif);font-size:17px;font-weight:300;color:var(--text-muted);margin-bottom:72px}
+.al-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.al-card{border:1px solid var(--border);padding:28px 24px;position:relative;overflow:hidden;transition:all .4s}
+.al-card:hover{border-color:var(--border-hover);background:var(--card-hover)}
+.al-card::after{content:attr(data-field);position:absolute;top:16px;right:16px;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--cambridge);text-transform:uppercase;opacity:.7}
+.al-name{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--text);margin-bottom:6px;transition:color .3s}
+.al-card:hover .al-name{color:var(--gold)}
+.al-desc{font-family:var(--serif);font-size:14px;font-weight:300;color:var(--text-muted);line-height:1.65}
+
+/* RANKINGS */
+#rankings{background:var(--bg);overflow:hidden}
+.rnk-bg{position:absolute;font-family:var(--display);font-size:400px;color:rgba(201,168,76,.03);line-height:1;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;user-select:none}
+.rnk-hdr{margin-bottom:80px;position:relative;z-index:2}
+.rnk-hdr h2{font-family:var(--display);font-size:clamp(48px,7vw,100px);color:var(--text);line-height:.9;margin-bottom:16px}
+.rnk-hdr h2 span{color:var(--gold)}
+.rnk-hdr p{font-family:var(--serif);font-size:17px;font-weight:300;color:var(--text-muted)}
+.rnk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;position:relative;z-index:2}
+.rnk-card{border:1px solid var(--border);padding:40px 32px;transition:all .4s}
+.rnk-card:hover{border-color:var(--border-hover);background:var(--card-hover)}
+.rc-src{font-family:var(--mono);font-size:9px;letter-spacing:3px;color:var(--cambridge);text-transform:uppercase;margin-bottom:20px;opacity:.8}
+.rc-rank{font-family:var(--display);font-size:80px;color:var(--gold);line-height:1;margin-bottom:4px}
+.rc-rank sup{font-size:32px}
+.rc-ctx{font-family:var(--serif);font-size:14px;font-weight:300;color:var(--text-muted);line-height:1.65}
+
+/* QUOTE */
+#qt{background:var(--bg3);padding:140px 60px;text-align:center;position:relative;overflow:hidden}
+.qt-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(42,95,120,.12) 0%,transparent 70%)}
+blockquote{position:relative;z-index:2;max-width:900px;margin:0 auto}
+blockquote p{font-family:var(--serif);font-size:clamp(26px,4vw,52px);font-style:italic;font-weight:300;line-height:1.3;color:var(--text);margin-bottom:32px}
+blockquote p strong{color:var(--gold);font-style:normal}
+blockquote cite{font-family:var(--mono);font-size:10px;letter-spacing:4px;color:var(--cambridge);text-transform:uppercase}
+
+/* FOOTER */
+footer{background:var(--bg3);border-top:1px solid var(--border);padding:60px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;transition:background var(--transition)}
+.ft-brand h3{font-family:var(--display);font-size:32px;color:var(--gold);letter-spacing:2px;margin-bottom:8px}
+.ft-brand p{font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase;line-height:2.2}
+.ft-col h4{font-family:var(--mono);font-size:9px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:20px}
+.ft-col ul{list-style:none}
+.ft-col li{font-family:var(--serif);font-size:15px;font-weight:300;color:var(--text-muted);line-height:2.3;cursor:none;transition:color .3s}
+.ft-col li:hover{color:var(--gold-pale)}
+.ft-bottom{grid-column:1/-1;border-top:1px solid var(--border);padding-top:32px;display:flex;justify-content:space-between;align-items:center}
+.ft-bottom p{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
+.reveal.in{opacity:1;transform:none}
+.d1{transition-delay:.1s} .d2{transition-delay:.22s} .d3{transition-delay:.34s}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:14px 24px}
+  .nav-links,.nav-coord{display:none}
+  #hero{padding:120px 24px 60px}
+  .hero-split{grid-template-columns:1fr;margin-top:40px}
+  .hero-model{height:40vh;order:-1}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor-dot" id="cDot"></div>
+<div class="cursor-ring" id="cRing"></div>
+
+<!-- IMAGE FOLLOWER -->
+<div class="img-follower" id="imgF">
+  <img src="" alt="" id="fImg" loading="lazy">
+  <div class="img-follower-label" id="fLbl"></div>
+</div>
+
+<!-- SCROLL TO TOP -->
+<button id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑</button>
+
+<!-- PRELOADER -->
+<div id="loader">
+  <div class="ldr-grid">
+    <div class="ldr-cell" style="--i:1"></div><div class="ldr-cell" style="--i:2"></div>
+    <div class="ldr-cell" style="--i:3"></div><div class="ldr-cell" style="--i:4"></div>
+    <div class="ldr-cell" style="--i:5"></div><div class="ldr-cell" style="--i:6"></div>
+    <div class="ldr-cell" style="--i:7"></div><div class="ldr-cell" style="--i:8"></div>
+    <div class="ldr-cell" style="--i:9"></div><div class="ldr-cell" style="--i:10"></div>
+    <div class="ldr-cell" style="--i:11"></div><div class="ldr-cell" style="--i:12"></div>
+  </div>
+  <div class="ldr-letters" id="ldrL"></div>
+  <div class="ldr-status">Initialising — Please Wait</div>
+  <div class="ldr-bar-w"><div class="ldr-bar"></div></div>
+  <button class="enter-btn" id="enterBtn" onclick="enterSite()">[ ENTER ]</button>
+</div>
+
+<!-- MAIN -->
+<div id="main" style="opacity:0;transition:opacity 1s ease">
+
+<nav>
+  <div class="nav-logo">UCam — Est. MCCIX</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#explore">Explore</a></li>
+    <li><a href="#history">History</a></li>
+    <li><a href="#colleges">Colleges</a></li>
+    <li><a href="#alumni">Alumni</a></li>
+    <li><a href="#rankings">Rankings</a></li>
+  </ul>
+  <div class="nav-r">
+    <span class="nav-coord">52.2054°N / 0.1132°E</span>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">◐ Mode</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-ver">VERSION<br>VERSION<br>—<br>EST.1209<br>EST.1209</div>
+  <div class="hero-coords">52.2054°N<br>0.1132°E<br>cambridge<br>england</div>
+  
+  <div class="hero-split">
+    
+    <div class="hero-content">
+      <div class="hero-eye">Execute — Enlightenment</div>
+      <h1 class="hero-title">
+        <span class="l1">UNIVERSITY</span>
+        <span class="l2">OF <span class="glitch" data-text="CAMBRIDGE">CAMBRIDGE</span></span>
+        <span class="l3">MCCIX—MMXXV</span>
+      </h1>
+      <p class="hero-sub">From this place, we gain enlightenment and precious knowledge. The world's third-oldest university in continuous operation.</p>
+      <div class="hero-stats">
+        <div><span class="hero-stat-num">126</span><span class="hero-stat-lbl">Nobel Prizes</span></div>
+        <div><span class="hero-stat-num">31</span><span class="hero-stat-lbl">Colleges</span></div>
+        <div><span class="hero-stat-num">816</span><span class="hero-stat-lbl">Years</span></div>
+      </div>
+    </div>
+
+    <div class="hero-model">
+      <model-viewer 
+        src="/Cambridge_model/scene.gltf" 
+        auto-rotate 
+        rotation-per-second="2deg"
+        camera-controls="false" 
+        disable-zoom
+        exposure="0.8"
+        interaction-prompt="none"
+        style="width: 100%; height: 100%;">
+      </model-viewer>
+    </div>
+
+  </div>
+  
+  <div class="hero-scroll">Scroll ↓</div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-strip">
+  <div class="marquee-inner">
+    <span>Hinc lucem et pocula sacra</span><span>Est. 1209</span><span>126 Nobel Laureates</span>
+    <span>31 Colleges</span><span>816 Years</span><span>Cambridge, England</span><span>Ranked No.1 UK</span>
+    <span>Hinc lucem et pocula sacra</span><span>Est. 1209</span><span>126 Nobel Laureates</span>
+    <span>31 Colleges</span><span>816 Years</span><span>Cambridge, England</span><span>Ranked No.1 UK</span>
+  </div>
+</div>
+
+<!-- IMAGE STRIP -->
+<div class="img-strip">
+  <div class="strip-item">
+    <img src="https://d25hwkr75zzfa.cloudfront.net/store/photo/large/building_847_maughan-library-1-2-red-flag-even-smaller_bfd3f3db325114b9bfe2b7682dbfd05d.jpg" alt="King's College" loading="lazy" onerror="this.parentNode.style.background='#1a2535'">
+    <div class="strip-lbl">King's College Chapel</div>
+  </div>
+  <div class="strip-item">
+    <img src="https://media.istockphoto.com/photos/trinity-college-inner-yeard-cambridge-picture-id536195673?k=20&m=536195673&s=612x612&w=0&h=hwpWyyUx2iXLqv1yNbON2rdoVCQxeZRvjJniMvaLuIM=" alt="Trinity College" loading="lazy" onerror="this.parentNode.style.background='#0d1f2d'">
+    <div class="strip-lbl">Trinity College Great Court</div>
+  </div>
+  <div class="strip-item">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Queens%27_College_-_Mathematical_Bridge.jpg/960px-Queens%27_College_-_Mathematical_Bridge.jpg" alt="Mathematical Bridge" loading="lazy" onerror="this.parentNode.style.background='#12201a'">
+    <div class="strip-lbl">Mathematical Bridge</div>
+  </div>
+  <div class="strip-item">
+    <img src="https://tse1.mm.bing.net/th/id/OIP.49yOPGhtzDuK4ZENaNEm0AHaE7?rs=1&pid=ImgDetMain&o=7&rm=3" alt="Bridge of Sighs" loading="lazy" onerror="this.parentNode.style.background='#1d1510'">
+    <div class="strip-lbl">Bridge of Sighs</div>
+  </div>
+  <div class="strip-item">
+    <img src="https://www.museums.cam.ac.uk/sites/default/files/styles/535x235/public/2018-10/fitz3.jpg?itok=L2QrhE9W" alt="Fitzwilliam Museum" loading="lazy" onerror="this.parentNode.style.background='#1a1520'">
+    <div class="strip-lbl">Fitzwilliam Museum</div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="sec-label">01 — About the University</div>
+  <div class="about-grid">
+    <div class="reveal">
+      <h2 class="about-head">A Collegiate <em>research</em> university unlike any other.</h2>
+      <p class="about-body">The University of Cambridge is a collegiate public research university in Cambridge, England. Founded in 1209, it is the world's third-oldest university in continuous operation — born from a dispute between scholars and townspeople at Oxford.</p>
+      <p class="about-body">The university comprises 31 semi-autonomous constituent colleges and more than 150 academic departments, organised into six schools. Undergraduate teaching centres on weekly small-group supervisions — an intimate pedagogy shared only with Oxford.</p>
+      <div class="about-motto">"Hinc lucem et pocula sacra"<small>From this place, we gain enlightenment and precious knowledge.</small></div>
+    </div>
+    <div class="reveal d2">
+      <div class="about-img-wrap">
+        <img src="https://media.istockphoto.com/id/1339701429/photo/cambridge-beautiful-sunset-kings-college-chapel-and-river-cam-at-sunset-cambridge-university.jpg?s=612x612&w=0&k=20&c=QN_a2pbkLXzOSZTmBzyKCSDW1xYyyIY-aaUjFnZTNaY=" alt="Trinity College" loading="lazy" onerror="this.style.background='linear-gradient(135deg,#1a2535,#0d1f2d)';this.src=''">
+        <div class="about-img-overlay"></div>
+        <div class="about-img-tag">Trinity College — Est. 1546</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPLORE -->
+<section id="explore">
+  <div class="sec-label">02 — Explore Cambridge</div>
+  <div class="explore-hdr">
+    <div class="reveal"><h2 class="explore-title">DISCOVER<br><span>CAMBRIDGE</span></h2></div>
+    <div class="reveal d1"><p class="explore-desc">Hover over each landmark to see it come alive. Eight centuries of architecture, scholarship and discovery — each building a chapter in the world's greatest university story.</p></div>
+  </div>
+  <ul class="explore-list">
+    <li class="exp-item reveal"       data-preview="https://smapse.com/storage/2018/11/screenshot-7-3.png"       data-label="King's College Chapel — Est. 1441"><div class="ei-left"><span class="ei-num">01</span><span class="ei-name">King's College Chapel</span></div><div class="ei-right"><span class="ei-tag">Est. 1441</span><span class="ei-arrow">→</span></div></li>
+    <li class="exp-item reveal d1"    data-preview="https://www.atlanticbridge.com/wp-content/uploads/2013/10/Trinity_college_library.jpg"    data-label="Trinity College Great Court — Est. 1546"><div class="ei-left"><span class="ei-num">02</span><span class="ei-name">Trinity College</span></div><div class="ei-right"><span class="ei-tag">Est. 1546</span><span class="ei-arrow">→</span></div></li>
+    <li class="exp-item reveal d2"    data-preview="https://cdn8.dissolve.com/p/D869_31_426/D869_31_426_1200.jpg" data-label="Mathematical Bridge — Queens' College"><div class="ei-left"><span class="ei-num">03</span><span class="ei-name">Mathematical Bridge</span></div><div class="ei-right"><span class="ei-tag">Queens' College</span><span class="ei-arrow">→</span></div></li>
+    <li class="exp-item reveal"       data-preview="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/StJohns_Bridge_of_Sighs.jpg/800px-StJohns_Bridge_of_Sighs.jpg"       data-label="Bridge of Sighs — St John's College"><div class="ei-left"><span class="ei-num">04</span><span class="ei-name">Bridge of Sighs</span></div><div class="ei-right"><span class="ei-tag">St John's College</span><span class="ei-arrow">→</span></div></li>
+    <li class="exp-item reveal d1"    data-preview="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Fitzwilliam_Museum%2C_Cambridge%2C_UK_-_Diliff.jpg/800px-Fitzwilliam_Museum%2C_Cambridge%2C_UK_-_Diliff.jpg" data-label="Fitzwilliam Museum — Est. 1816"><div class="ei-left"><span class="ei-num">05</span><span class="ei-name">Fitzwilliam Museum</span></div><div class="ei-right"><span class="ei-tag">Est. 1816</span><span class="ei-arrow">→</span></div></li>
+    <li class="exp-item reveal d2"    data-preview="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Peterhouse%2C_Cambridge.jpg/800px-Peterhouse%2C_Cambridge.jpg"       data-label="Peterhouse — Cambridge's Oldest College, Est. 1284"><div class="ei-left"><span class="ei-num">06</span><span class="ei-name">Peterhouse</span></div><div class="ei-right"><span class="ei-tag">Est. 1284</span><span class="ei-arrow">→</span></div></li>
+    <li class="exp-item reveal"       data-preview="https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gonville_and_Caius_College_from_King%27s_Parade_Cambridge.jpg/800px-Gonville_and_Caius_College_from_King%27s_Parade_Cambridge.jpg" data-label="Gonville & Caius College — Est. 1348"><div class="ei-left"><span class="ei-num">07</span><span class="ei-name">Gonville & Caius College</span></div><div class="ei-right"><span class="ei-tag">Est. 1348</span><span class="ei-arrow">→</span></div></li>
+    <li class="exp-item reveal d1"    data-preview="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Cambridge_University_Library.jpg/800px-Cambridge_University_Library.jpg"  data-label="University Library — 16 Million Volumes"><div class="ei-left"><span class="ei-num">08</span><span class="ei-name">University Library</span></div><div class="ei-right"><span class="ei-tag">16M Volumes</span><span class="ei-arrow">→</span></div></li>
+  </ul>
+</section>
+
+<!-- HISTORY -->
+<section id="history">
+  <div class="sec-label">03 — History</div>
+  <div class="hist-intro reveal">
+    <h2>815 <span>Years</span> of Legacy</h2>
+    <p>Cambridge's founding followed scholars fleeing Oxford after a violent dispute with townspeople. From a royal charter in 1231 to cracking the code of DNA — every century has left its mark on the world.</p>
+  </div>
+  <div class="timeline">
+    <div class="tl-item reveal"><div class="tl-year">1209</div><div class="tl-content"><h3>The Founding</h3><p>Scholars dispossessed from Oxford arrive in Cambridge following a dispute with local townspeople. The nucleus of a new university forms alongside scholars already resident in the city.</p></div><div class="tl-thumb"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/King%27s_College_Cambridge.jpg/200px-King%27s_College_Cambridge.jpg" alt="" loading="lazy" onerror="this.parentNode.style.background='#1a2535';this.remove()"></div></div>
+    <div class="tl-item reveal d1"><div class="tl-year">1231</div><div class="tl-content"><h3>Royal Charter</h3><p>King Henry III grants formal recognition. Rents in Cambridge are set by university custom, establishing it as a formal institution with legal standing and protections.</p></div><div class="tl-thumb" style="background:linear-gradient(135deg,#1a2030,#0d1520)"></div></div>
+    <div class="tl-item reveal d2"><div class="tl-year">1284</div><div class="tl-content"><h3>First College Founded</h3><p>Peterhouse, the oldest of Cambridge's 31 colleges, is founded by Hugh de Balsham — establishing the collegiate model that defines Cambridge to this day.</p></div><div class="tl-thumb"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Peterhouse%2C_Cambridge.jpg/200px-Peterhouse%2C_Cambridge.jpg" alt="" loading="lazy" onerror="this.parentNode.style.background='#1d1a2a';this.remove()"></div></div>
+    <div class="tl-item reveal"><div class="tl-year">1687</div><div class="tl-content"><h3>Newton's Principia</h3><p>Isaac Newton, conducting experiments at Trinity College, publishes Principia Mathematica — fundamentally reshaping humanity's understanding of the physical universe.</p></div><div class="tl-thumb"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Great_Court_Trinity_College.jpg/200px-Great_Court_Trinity_College.jpg" alt="" loading="lazy" onerror="this.parentNode.style.background='#0d1f2d';this.remove()"></div></div>
+    <div class="tl-item reveal d1"><div class="tl-year">1953</div><div class="tl-content"><h3>Structure of DNA</h3><p>Francis Crick and James Watson, working at the Cavendish Laboratory, reveal the double-helix structure of DNA — one of the most profound scientific breakthroughs in history.</p></div><div class="tl-thumb" style="background:linear-gradient(135deg,#0d2012,#081a10)"></div></div>
+    <div class="tl-item reveal d2"><div class="tl-year">2025</div><div class="tl-content"><h3>Into the Future</h3><p>With a £2.76 billion endowment and 126 Nobel Prizes, Cambridge continues shaping the frontiers of knowledge — from artificial intelligence to climate science and beyond.</p></div><div class="tl-thumb" style="background:linear-gradient(135deg,#2a5f78,#1a3d50)"></div></div>
+  </div>
+</section>
+
+<!-- COLLEGES -->
+<section id="colleges">
+  <div class="sec-label">04 — The Colleges</div>
+  <div class="col-hdr">
+    <div class="reveal"><h2>31 <span>Colleges</span></h2></div>
+    <div class="reveal d1"><p>Each college is a self-governing institution within the university — managing its own property, personnel and policies. All students are required to hold a college affiliation, making each college a home, not just a classroom.</p></div>
+  </div>
+  <div class="col-grid">
+    <div class="col-card reveal"><div class="cc-n">01</div><div class="cc-name">Christ's</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">02</div><div class="cc-name">Churchill</div></div>
+    <div class="col-card reveal d2"><div class="cc-n">03</div><div class="cc-name">Clare</div></div>
+    <div class="col-card reveal"><div class="cc-n">04</div><div class="cc-name">Clare Hall</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">05</div><div class="cc-name">Corpus Christi</div></div>
+    <div class="col-card reveal"><div class="cc-n">06</div><div class="cc-name">Darwin</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">07</div><div class="cc-name">Downing</div></div>
+    <div class="col-card reveal d2"><div class="cc-n">08</div><div class="cc-name">Emmanuel</div></div>
+    <div class="col-card reveal"><div class="cc-n">09</div><div class="cc-name">Fitzwilliam</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">10</div><div class="cc-name">Girton</div></div>
+    <div class="col-card reveal"><div class="cc-n">11</div><div class="cc-name">Gonville & Caius</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">12</div><div class="cc-name">Homerton</div></div>
+    <div class="col-card reveal d2"><div class="cc-n">13</div><div class="cc-name">Hughes Hall</div></div>
+    <div class="col-card reveal"><div class="cc-n">14</div><div class="cc-name">Jesus</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">15</div><div class="cc-name">King's</div></div>
+    <div class="col-card reveal"><div class="cc-n">16</div><div class="cc-name">Lucy Cavendish</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">17</div><div class="cc-name">Magdalene</div></div>
+    <div class="col-card reveal d2"><div class="cc-n">18</div><div class="cc-name">Murray Edwards</div></div>
+    <div class="col-card reveal"><div class="cc-n">19</div><div class="cc-name">Newnham</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">20</div><div class="cc-name">Pembroke</div></div>
+    <div class="col-card reveal"><div class="cc-n">21</div><div class="cc-name">Peterhouse</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">22</div><div class="cc-name">Queens'</div></div>
+    <div class="col-card reveal d2"><div class="cc-n">23</div><div class="cc-name">Robinson</div></div>
+    <div class="col-card reveal"><div class="cc-n">24</div><div class="cc-name">Selwyn</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">25</div><div class="cc-name">Sidney Sussex</div></div>
+    <div class="col-card reveal"><div class="cc-n">26</div><div class="cc-name">St Catharine's</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">27</div><div class="cc-name">St Edmund's</div></div>
+    <div class="col-card reveal d2"><div class="cc-n">28</div><div class="cc-name">St John's</div></div>
+    <div class="col-card reveal"><div class="cc-n">29</div><div class="cc-name">Trinity</div></div>
+    <div class="col-card reveal d1"><div class="cc-n">30</div><div class="cc-name">Trinity Hall</div></div>
+    <div class="col-card reveal d2"><div class="cc-n">31</div><div class="cc-name">Wolfson</div></div>
+  </div>
+</section>
+
+<!-- ALUMNI -->
+<section id="alumni">
+  <div class="sec-label">05 — Notable Alumni</div>
+  <h2 class="al-title reveal">Minds That <span>Moved</span> the World</h2>
+  <p class="al-sub reveal d1">126 Nobel Prizes · 11 Fields Medals · 14 Prime Ministers · 9 Monarchs</p>
+  <div class="al-grid">
+    <div class="al-card reveal" data-field="Physics"><div class="al-name">Isaac Newton</div><div class="al-desc">Formulated classical mechanics and universal gravitation. Conducted experiments at Trinity College.</div></div>
+    <div class="al-card reveal d1" data-field="Biology"><div class="al-name">Charles Darwin</div><div class="al-desc">Christ's College alumnus. Developed the theory of natural selection — forever changing our understanding of life.</div></div>
+    <div class="al-card reveal d2" data-field="Computing"><div class="al-name">Alan Turing</div><div class="al-desc">Devised the foundational basis for modern computing. King's College alumnus and fellow.</div></div>
+    <div class="al-card reveal" data-field="Economics"><div class="al-name">John Maynard Keynes</div><div class="al-desc">Revolutionised macroeconomic theory and shaped modern fiscal policy across the 20th century.</div></div>
+    <div class="al-card reveal d1" data-field="Cosmology"><div class="al-name">Stephen Hawking</div><div class="al-desc">Lucasian Professor of Mathematics. Transformed our understanding of black holes and spacetime.</div></div>
+    <div class="al-card reveal d2" data-field="Philosophy"><div class="al-name">Bertrand Russell</div><div class="al-desc">Shaped analytic philosophy and mathematical logic. Nobel Prize in Literature, 1950.</div></div>
+    <div class="al-card reveal" data-field="Mathematics"><div class="al-name">Srinivasa Ramanujan</div><div class="al-desc">Made extraordinary contributions to number theory and infinite series as a Fellow of Trinity College.</div></div>
+    <div class="al-card reveal d1" data-field="Physics"><div class="al-name">Ernest Rutherford</div><div class="al-desc">Father of nuclear physics. Split the atom. Spent his career at the Cavendish Laboratory.</div></div>
+    <div class="al-card reveal d2" data-field="Literature"><div class="al-name">Salman Rushdie</div><div class="al-desc">One of the most celebrated novelists of the 20th century. King's College, Cambridge.</div></div>
+  </div>
+</section>
+
+<!-- RANKINGS -->
+<section id="rankings">
+  <div class="rnk-bg">#1</div>
+  <div class="rnk-hdr reveal"><h2>World-<span>Class</span> Rankings</h2><p>Consistently ranked among the top universities on Earth across every major international framework.</p></div>
+  <div class="rnk-grid">
+    <div class="rnk-card reveal"><div class="rc-src">Complete University Guide (2026)</div><div class="rc-rank">#<sup>1</sup></div><div class="rc-ctx">Ranked first nationally — the top position in the United Kingdom.</div></div>
+    <div class="rnk-card reveal d1"><div class="rc-src">QS World Rankings (2026)</div><div class="rc-rank">#<sup>6</sup></div><div class="rc-ctx">Sixth globally across 1,500+ institutions evaluated for research impact.</div></div>
+    <div class="rnk-card reveal d2"><div class="rc-src">Times Higher Education (2026)</div><div class="rc-rank">#<sup>3</sup></div><div class="rc-ctx">Joint third in the world for teaching, research, citations and industry.</div></div>
+    <div class="rnk-card reveal"><div class="rc-src">ARWU Shanghai (2025)</div><div class="rc-rank">#<sup>4</sup></div><div class="rc-ctx">Fourth globally, measuring research output and alumni achievements.</div></div>
+    <div class="rnk-card reveal d1"><div class="rc-src">CWUR Top Public University</div><div class="rc-rank">12<sup>yr</sup></div><div class="rc-ctx">Top public university in the world for twelve consecutive years.</div></div>
+    <div class="rnk-card reveal d2"><div class="rc-src">Nobel Prize Alumni</div><div class="rc-rank">126</div><div class="rc-ctx">The highest concentration of Nobel Laureates of any institution on Earth.</div></div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<div id="qt">
+  <div class="qt-bg"></div>
+  <blockquote>
+    <p>"<strong>Hinc lucem et pocula sacra</strong> — from this place, we gain enlightenment and precious knowledge."</p>
+    <cite>University Motto — Est. 1209</cite>
+  </blockquote>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-brand"><h3>CAMBRIDGE</h3><p>Est. MCCIX<br>52.2054°N / 0.1132°E<br>Cambridge, England<br>cam.ac.uk</p></div>
+  <div class="ft-col"><h4>Study</h4><ul><li>Undergraduate</li><li>Postgraduate</li><li>Continuing Education</li><li>Admissions</li><li>Fees & Funding</li></ul></div>
+  <div class="ft-col"><h4>Research</h4><ul><li>Departments</li><li>Institutes</li><li>Publications</li><li>Innovation</li><li>Silicon Fen</li></ul></div>
+  <div class="ft-bottom"><p>© University of Cambridge — All Rights Reserved</p><p>Version EST.1209 — RC.MMXXV</p></div>
+</footer>
+
+</div>
+
+<script>
+/* CURSOR */
+const cDot=document.getElementById('cDot'), cRing=document.getElementById('cRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+(function animC(){
+  cDot.style.left=mx+'px'; cDot.style.top=my+'px';
+  rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+  cRing.style.left=rx+'px'; cRing.style.top=ry+'px';
+  requestAnimationFrame(animC);
+})();
+document.querySelectorAll('a,button,.col-card,.al-card,.exp-item,.rnk-card,.strip-item,.tl-item').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
+});
+
+/* IMAGE FOLLOWER */
+const imgF=document.getElementById('imgF'), fImg=document.getElementById('fImg'), fLbl=document.getElementById('fLbl');
+let fActive=false;
+document.querySelectorAll('.exp-item[data-preview]').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{
+    fImg.src=el.dataset.preview; fLbl.textContent=el.dataset.label||'';
+    imgF.classList.add('active'); fActive=true;
+  });
+  el.addEventListener('mouseleave',()=>{ imgF.classList.remove('active'); fActive=false; });
+});
+document.addEventListener('mousemove',e=>{
+  if(!fActive) return;
+  const fw=340, flip=e.clientX+fw+40>window.innerWidth;
+  imgF.style.left=e.clientX+'px'; imgF.style.top=e.clientY+'px';
+  imgF.style.transform=flip?`translate(calc(-100% - 28px),-50%) scale(1) rotate(0)`:`translate(28px,-50%) scale(1) rotate(0)`;
+});
+
+/* THEME */
+let dark=true;
+function toggleTheme(){
+  dark=!dark;
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  document.getElementById('themeBtn').textContent=dark?'◐ Mode':'◑ Mode';
+}
+
+/* PRELOADER */
+'CAMBRIDGE'.split('').forEach((ch,i)=>{
+  const s=document.createElement('span');
+  s.className='ldr-letter'; s.textContent=ch;
+  s.style.animationDelay=(i*.08+.3)+'s';
+  document.getElementById('ldrL').appendChild(s);
+});
+setTimeout(()=>document.getElementById('enterBtn').classList.add('show'),2600);
+function enterSite(){
+  document.getElementById('loader').classList.add('out');
+  setTimeout(()=>{
+    document.getElementById('loader').style.display='none';
+    document.getElementById('main').style.opacity='1';
+  },800);
+}
+
+/* SCROLL REVEAL */
+const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* SCROLL TO TOP */
+const stBtn=document.getElementById('scrollTop');
+window.addEventListener('scroll',()=>stBtn.classList.toggle('show',window.scrollY>400));
+
+/* HERO PARALLAX */
+const hPhoto=document.getElementById('heroPhoto');
+window.addEventListener('scroll',()=>{ hPhoto.style.transform=`translateY(${window.scrollY*.3}px)`; },{passive:true});
+</script>
+</body>
+</html>
